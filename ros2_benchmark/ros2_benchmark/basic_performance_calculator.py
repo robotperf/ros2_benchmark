@@ -50,7 +50,7 @@ class BasicPerformanceCalculator():
         """Initialize the calculator."""
         self.config = config
         self._report_prefix = config.get('report_prefix', '')
-        self._message_key_match = config.get('message_key_match', False)
+        self._message_key_match = config.get('message_key_match', True)
         self._logger = None
         self._perf_data_list = []
 
