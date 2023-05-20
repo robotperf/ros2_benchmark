@@ -201,9 +201,9 @@ class BasicPerformanceCalculator():
             if not all([isinstance(value, numbers.Number) for value in metric_value_list]):
                 continue
 
-            # Remove the best and the worst before concluding the metric
-            metric_value_list.remove(max(metric_value_list))
-            metric_value_list.remove(min(metric_value_list))
+            # # Remove the best and the worst before concluding the metric
+            # metric_value_list.remove(max(metric_value_list))
+            # metric_value_list.remove(min(metric_value_list))
 
             if metric in MEAN_METRICS:
                 final_perf_data[metric] = sum(metric_value_list)/len(metric_value_list)
