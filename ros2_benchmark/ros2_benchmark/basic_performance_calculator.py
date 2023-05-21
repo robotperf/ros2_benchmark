@@ -1,5 +1,8 @@
 # SPDX-FileCopyrightText: NVIDIA CORPORATION & AFFILIATES
 # Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# Copyright (C) 2023 Acceleration Robotics S.L.U. - All Rights Reserved
+#
+# Extended by Víctor Mayoral Vilches <victor@accelerationrobotics.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
