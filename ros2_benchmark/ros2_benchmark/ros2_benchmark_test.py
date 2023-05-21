@@ -384,6 +384,7 @@ class ROS2BenchmarkTest(unittest.TestCase):
         with open(log_file_path, 'a') as f:
             f.write(json.dumps(to_json_compatible_helper(report)))
         self.get_logger().info(f'Exported benchmark report to {log_file_path}')
+        return log_file_path
 
     def create_service_client_blocking(self, service_type, service_name):
         """Create a service client and wait for it to be available."""
@@ -844,7 +845,7 @@ class ROS2BenchmarkTest(unittest.TestCase):
 
         final_report = self.construct_final_report(perf_results)
         self.print_report(final_report, sub_heading='Final Report')
-        self.export_report(final_report)
+        return self.export_report(final_report)
 
     def run_benchmark_timeline_playback_mode(self) -> dict:
         self.push_logger_name('Timeline')

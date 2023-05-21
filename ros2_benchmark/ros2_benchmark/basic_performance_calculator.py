@@ -43,6 +43,7 @@ class BasicPerformanceMetrics(Enum):
     MAX_JITTER = 'Max. Frame-to-Frame Jitter (ms)'
     MIN_JITTER = 'Min. Frame-to-Frame Jitter (ms)'
     MEAN_JITTER = 'Mean Frame-to-Frame Jitter (ms)'
+    RMS_LATENCY = 'RMS Frame-to-Frame Jitter (ms)'
     STD_DEV_JITTER = 'Frame-to-Frame Jitter Std. Deviation (ms)'
 
 
@@ -126,27 +127,48 @@ class BasicPerformanceCalculator():
         perf_data[BasicPerformanceMetrics.LAST_SENT_RECEIVED_LATENCY] = \
             last_end_timestamp_ms - last_sent_time_ms
 
-        if self._message_key_match:
-            # Calculate latency between sent and received messages
-            end_to_end_latencies_ms = []
-            for message_key, start_timestamp_ns in start_timestamps_ns.items():
-                if message_key in end_timestamps_ns:
-                    end_to_end_latencies_ms.append(
-                        (end_timestamps_ns[message_key] - start_timestamp_ns) / 10**6)
 
-            if len(end_to_end_latencies_ms) > 0:
-                perf_data[BasicPerformanceMetrics.FIRST_INPUT_LATENCY] = \
-                    end_to_end_latencies_ms[0]
-                perf_data[BasicPerformanceMetrics.LAST_INPUT_LATENCY] = \
-                    end_to_end_latencies_ms[-1]
-                perf_data[BasicPerformanceMetrics.MAX_LATENCY] = \
-                    max(end_to_end_latencies_ms)
-                perf_data[BasicPerformanceMetrics.MIN_LATENCY] = \
-                    min(end_to_end_latencies_ms)
-                perf_data[BasicPerformanceMetrics.MEAN_LATENCY] = \
-                    sum(end_to_end_latencies_ms) / len(end_to_end_latencies_ms)
-            else:
-                self.get_logger().warning('No end-to-end latency data available.')
+        # BasicPerformanceMetrics.MAX_LATENCY, MIN and MEAN
+        #
+        # NOTE: Ignore the logic below, as keys are mistmatched due to
+        # a bug in the timestamping logic.
+        #
+        # Match the start and end timestamps by message key instead        
+        values_start_timestamps_ns = list(start_timestamps_ns.values())
+        values_end_timestamps_ns = list(end_timestamps_ns.values())
+        latency_results = [(x - y)/10**6 for x, y in 
+            zip(values_end_timestamps_ns, values_start_timestamps_ns)]
+
+        perf_data[BasicPerformanceMetrics.MAX_LATENCY] = \
+            max(latency_results)
+        perf_data[BasicPerformanceMetrics.MIN_LATENCY] = \
+            min(latency_results)
+        perf_data[BasicPerformanceMetrics.MEAN_LATENCY] = \
+            sum(latency_results) / len(latency_results)
+        perf_data[BasicPerformanceMetrics.RMS_LATENCY] = \
+            numpy.sqrt(numpy.mean(numpy.array(latency_results) ** 2))
+
+        # if self._message_key_match:
+        #     # Calculate latency between sent and received messages
+        #     end_to_end_latencies_ms = []
+        #     for message_key, start_timestamp_ns in start_timestamps_ns.items():
+        #         if message_key in end_timestamps_ns:
+        #             end_to_end_latencies_ms.append(
+        #                 (end_timestamps_ns[message_key] - start_timestamp_ns) / 10**6)
+
+        #     if len(end_to_end_latencies_ms) > 0:
+        #         perf_data[BasicPerformanceMetrics.FIRST_INPUT_LATENCY] = \
+        #             end_to_end_latencies_ms[0]
+        #         perf_data[BasicPerformanceMetrics.LAST_INPUT_LATENCY] = \
+        #             end_to_end_latencies_ms[-1]
+        #         perf_data[BasicPerformanceMetrics.MAX_LATENCY] = \
+        #             max(end_to_end_latencies_ms)
+        #         perf_data[BasicPerformanceMetrics.MIN_LATENCY] = \
+        #             min(end_to_end_latencies_ms)
+        #         perf_data[BasicPerformanceMetrics.MEAN_LATENCY] = \
+        #             sum(end_to_end_latencies_ms) / len(end_to_end_latencies_ms)
+        #     else:
+        #         self.get_logger().warning('No end-to-end latency data available.')
 
         # Calculate frame-to-frame jitter if at least 3 valid end timestamps are received
         if len(end_timestamps_ns) > 2:
@@ -187,6 +209,7 @@ class BasicPerformanceCalculator():
             BasicPerformanceMetrics.MEAN_FRAME_RATE,
             BasicPerformanceMetrics.STD_DEV_JITTER,
             BasicPerformanceMetrics.MEAN_PLAYBACK_FRAME_RATE,
+            BasicPerformanceMetrics.RMS_LATENCY,
         ]
         MAX_METRICS = [
             BasicPerformanceMetrics.MAX_LATENCY,
