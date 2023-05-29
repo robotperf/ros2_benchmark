@@ -46,6 +46,11 @@ from .utils.nsys_utility import NsysUtility
 from .utils.ros2_utility import ClientUtility
 
 
+from tracetools_launch.action import Trace
+from tracetools_trace.tools.names import DEFAULT_EVENTS_ROS
+from tracetools_trace.tools.names import DEFAULT_EVENTS_KERNEL
+from tracetools_trace.tools.names import DEFAULT_CONTEXT
+
 # The maximum allowed line width of a performance repeort displayed in the terminal
 MAX_REPORT_OUTPUT_WIDTH = 90
 
@@ -190,8 +195,29 @@ class ROS2BenchmarkTest(unittest.TestCase):
             NsysUtility.launch_setup_wrapper,
             launch_setup=launch_setup)
         nodes = launch_args + [OpaqueFunction(function=bound_launch_setup)]
+        
+        trace = Trace(
+            session_name="a2_rectify_nvidia",
+            events_ust=[
+                "robotperf_benchmarks:*",
+                "ros2_image_pipeline:*",
+                "ros2:*"
+                # "lttng_ust_cyg_profile*",
+                # "lttng_ust_statedump*",
+                # "liblttng-ust-libc-wrapper",
+            ]
+            + DEFAULT_EVENTS_ROS,
+            context_fields={
+                    'kernel': [],
+                    'userspace': ['vpid', 'vtid', 'procname'],
+            },
+            # events_kernel=DEFAULT_EVENTS_KERNEL,
+            # context_names=DEFAULT_CONTEXT,
+        )
+        
+        
         return launch.LaunchDescription(
-            nodes + [
+            nodes + [trace] + [
                 # Start tests after a fixed delay for node startup
                 launch.actions.TimerAction(
                     period=node_startup_delay,
