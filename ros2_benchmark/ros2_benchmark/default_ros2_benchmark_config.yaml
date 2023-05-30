@@ -1,4 +1,8 @@
 %YAML 1.2
+#  Modification Copyright (c) 2023, Acceleration Robotics®
+#  Author: Alejandra Martínez Fariña <alex@accelerationrobotics.com>
+#  Based on:
+#
 # SPDX-FileCopyrightText: NVIDIA CORPORATION & AFFILIATES
 # Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 #
@@ -139,3 +143,5 @@ ros2_benchmark_config:
     # The time range (in seconds) in the data to be loaded from a data loader node
     input_data_start_time: -1
     input_data_end_time: -1
+
+    option: 'with_monitor_node'

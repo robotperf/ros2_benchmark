@@ -1,3 +1,8 @@
+#  Modification Copyright (c) 2023, Acceleration Robotics®
+#  Author: Alejandra Martínez Fariña <alex@accelerationrobotics.com>
+#  Author: Martiño Crespo Álvarez <martinho@accelerationrobotics.com>
+#  Based on:
+#
 # SPDX-FileCopyrightText: NVIDIA CORPORATION & AFFILIATES
 # Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 #
@@ -603,30 +608,32 @@ class ROS2BenchmarkTest(unittest.TestCase):
         # Create play_messages service
         play_messages_client = self.create_service_client_blocking(PlayMessages, 'play_messages')
 
-        # Create and send monitor service requests
-        monitor_service_client_map = {}
-        monitor_service_future_map = {}
-        for monitor_info in self.config.monitor_info_list:
-            # Create a monitor service client
-            start_monitoring_client = self.create_service_client_blocking(
-                StartMonitoring, monitor_info.service_name)
-            if start_monitoring_client is None:
-                return
+        
+        if self.config.option == 'with_monitor_node':
+            # Create and send monitor service requests
+            monitor_service_client_map = {}
+            monitor_service_future_map = {}
+            for monitor_info in self.config.monitor_info_list:
+                # Create a monitor service client
+                start_monitoring_client = self.create_service_client_blocking(
+                    StartMonitoring, monitor_info.service_name)
+                if start_monitoring_client is None:
+                    return
 
-            # Start monitoring messages
-            self.get_logger().info(
-                f'Requesting to monitor end messages from service "{monitor_info.service_name}".')
-            start_monitoring_request = StartMonitoring.Request()
-            start_monitoring_request.timeout = self.config.start_monitoring_service_timeout_sec
-            start_monitoring_request.message_count = playback_message_count
-            start_monitoring_request.revise_timestamps_as_message_ids = \
-                self.config.revise_timestamps_as_message_ids
-            start_monitoring_future = start_monitoring_client.call_async(
-                start_monitoring_request)
+                # Start monitoring messages
+                self.get_logger().info(
+                    f'Requesting to monitor end messages from service "{monitor_info.service_name}".')
+                start_monitoring_request = StartMonitoring.Request()
+                start_monitoring_request.timeout = self.config.start_monitoring_service_timeout_sec
+                start_monitoring_request.message_count = playback_message_count
+                start_monitoring_request.revise_timestamps_as_message_ids = \
+                    self.config.revise_timestamps_as_message_ids
+                start_monitoring_future = start_monitoring_client.call_async(
+                    start_monitoring_request)
 
-            monitor_service_client_map[monitor_info.service_name] = start_monitoring_client
-            monitor_service_future_map[monitor_info.service_name] = start_monitoring_future
-
+                monitor_service_client_map[monitor_info.service_name] = start_monitoring_client
+                monitor_service_future_map[monitor_info.service_name] = start_monitoring_future
+            
         # Start CPU profiler
         if self.config.enable_cpu_profiler:
             self._cpu_profiler.stop_profiling()
@@ -658,20 +665,21 @@ class ROS2BenchmarkTest(unittest.TestCase):
             start_timestamp = play_messages_response.timestamps.timestamps_ns[i]
             start_timestamps[key] = start_timestamp
 
-        # Get end timestamps from all monitors
-        monitor_end_timestamps_map = {}
-        for monitor_info in self.config.monitor_info_list:
-            self.get_logger().info(
-                f'Waiting for the monitor service "{monitor_info.service_name}" to finish.')
-            monitor_response = self.get_service_response_from_future_blocking(
-                monitor_service_future_map[monitor_info.service_name])
-            end_timestamps = {}
-            for i in range(len(monitor_response.timestamps.keys)):
-                key = monitor_response.timestamps.keys[i]
-                end_timestamp = monitor_response.timestamps.timestamps_ns[i]
-                end_timestamps[key] = end_timestamp
-            monitor_end_timestamps_map[monitor_info.service_name] = end_timestamps
-
+        if self.config.option == 'with_monitor_node':
+            # Get end timestamps from all monitors
+            monitor_end_timestamps_map = {}
+            for monitor_info in self.config.monitor_info_list:
+                self.get_logger().info(
+                    f'Waiting for the monitor service "{monitor_info.service_name}" to finish.')
+                monitor_response = self.get_service_response_from_future_blocking(
+                    monitor_service_future_map[monitor_info.service_name])
+                end_timestamps = {}
+                for i in range(len(monitor_response.timestamps.keys)):
+                    key = monitor_response.timestamps.keys[i]
+                    end_timestamp = monitor_response.timestamps.timestamps_ns[i]
+                    end_timestamps[key] = end_timestamp
+                monitor_end_timestamps_map[monitor_info.service_name] = end_timestamps
+            
         # Stop CPU profiler
         if self.config.enable_cpu_profiler:
             self._cpu_profiler.stop_profiling()
@@ -679,17 +687,18 @@ class ROS2BenchmarkTest(unittest.TestCase):
 
         # Calculate performance results
         performance_results = {}
-        for monitor_info in self.config.monitor_info_list:
-            end_timestamps = monitor_end_timestamps_map[monitor_info.service_name]
-            if len(end_timestamps) == 0:
-                error_message = 'No messages were observed from the monitor node ' + \
-                    monitor_info.service_name
-                self.get_logger().error(error_message)
-                raise RuntimeError(error_message)
-            for calculator in monitor_info.calculators:
-                performance_results.update(
-                    calculator.calculate_performance(start_timestamps, end_timestamps))
-
+        if self.config.option == 'with_monitor_node':
+            for monitor_info in self.config.monitor_info_list:
+                end_timestamps = monitor_end_timestamps_map[monitor_info.service_name]
+                if len(end_timestamps) == 0:
+                    error_message = 'No messages were observed from the monitor node ' + \
+                        monitor_info.service_name
+                    self.get_logger().error(error_message)
+                    raise RuntimeError(error_message)
+                for calculator in monitor_info.calculators:
+                    performance_results.update(
+                        calculator.calculate_performance(start_timestamps, end_timestamps))
+            
         # Add CPU profiler results
         if self.config.enable_cpu_profiler:
             performance_results.update(self._cpu_profiler.get_results())
@@ -756,20 +765,22 @@ class ROS2BenchmarkTest(unittest.TestCase):
                 probe_perf_results,
                 sub_heading=f'Throughput Search Probe {probe_freq}Hz')
 
-            # Check if this probe frequency was sustainable
-            first_monitor_perf = self.get_performance_results_of_first_monitor_calculator(
-                probe_perf_results)
-            if (first_monitor_perf[BasicPerformanceMetrics.MEAN_FRAME_RATE] >=
-                first_monitor_perf[BasicPerformanceMetrics.MEAN_PLAYBACK_FRAME_RATE] -
-                self.config.binary_search_acceptable_frame_rate_drop
-                ) and (
-                    first_monitor_perf[BasicPerformanceMetrics.NUM_MISSED_FRAMES] <=
-                    ceil(first_monitor_perf[BasicPerformanceMetrics.NUM_FRAMES_SENT] *
-                         self.config.binary_search_acceptable_frame_loss_fraction)
-            ):
-                current_lower_freq = probe_freq
-            else:
-                current_upper_freq = probe_freq
+            if self.config.option == 'with_monitor_node':
+                # Check if this probe frequency was sustainable
+                first_monitor_perf = self.get_performance_results_of_first_monitor_calculator(
+                    probe_perf_results)
+                if (first_monitor_perf[BasicPerformanceMetrics.MEAN_FRAME_RATE] >=
+                    first_monitor_perf[BasicPerformanceMetrics.MEAN_PLAYBACK_FRAME_RATE] -
+                    self.config.binary_search_acceptable_frame_rate_drop
+                    ) and (
+                        first_monitor_perf[BasicPerformanceMetrics.NUM_MISSED_FRAMES] <=
+                        ceil(first_monitor_perf[BasicPerformanceMetrics.NUM_FRAMES_SENT] *
+                            self.config.binary_search_acceptable_frame_loss_fraction)
+                ):
+                    current_lower_freq = probe_freq
+                else:
+                    current_upper_freq = probe_freq
+                
 
         target_freq = current_lower_freq
 
@@ -795,20 +806,22 @@ class ROS2BenchmarkTest(unittest.TestCase):
                 sub_heading=f'Throughput Search Probe {probe_freq}Hz')
 
             # Check if this probe frequency was sustainable
-            first_monitor_perf = self.get_performance_results_of_first_monitor_calculator(
-                probe_perf_results)
-            if (first_monitor_perf[BasicPerformanceMetrics.MEAN_FRAME_RATE] >=
-                first_monitor_perf[BasicPerformanceMetrics.MEAN_PLAYBACK_FRAME_RATE] -
-                self.config.linear_scan_acceptable_frame_rate_drop
-                ) and (
-                first_monitor_perf[BasicPerformanceMetrics.NUM_MISSED_FRAMES] <=
-                ceil(first_monitor_perf[BasicPerformanceMetrics.NUM_FRAMES_SENT] *
-                     self.config.linear_scan_acceptable_frame_loss_fraction)
-            ):
-                target_freq = probe_freq
-            else:
-                # The new probe frequency is too high, so terminate the linear scan
-                break
+            if self.config.option == 'with_monitor_node':
+                first_monitor_perf = self.get_performance_results_of_first_monitor_calculator(
+                    probe_perf_results)
+                if (first_monitor_perf[BasicPerformanceMetrics.MEAN_FRAME_RATE] >=
+                    first_monitor_perf[BasicPerformanceMetrics.MEAN_PLAYBACK_FRAME_RATE] -
+                    self.config.linear_scan_acceptable_frame_rate_drop
+                    ) and (
+                    first_monitor_perf[BasicPerformanceMetrics.NUM_MISSED_FRAMES] <=
+                    ceil(first_monitor_perf[BasicPerformanceMetrics.NUM_FRAMES_SENT] *
+                        self.config.linear_scan_acceptable_frame_loss_fraction)
+                ):
+                    target_freq = probe_freq
+                else:
+                    # The new probe frequency is too high, so terminate the linear scan
+                    break
+                
 
         self.get_logger().info(
             f'Final predicted max sustainable frequency was {target_freq}Hz')
@@ -914,9 +927,11 @@ class ROS2BenchmarkTest(unittest.TestCase):
 
         # Conclude performance measurements from the iteratoins
         final_perf_results = {}
-        for monitor_info in self.config.monitor_info_list:
-            for calculator in monitor_info.calculators:
-                final_perf_results.update(calculator.conclude_performance())
+        if self.config.option == 'with_monitor_node':
+            for monitor_info in self.config.monitor_info_list:
+                for calculator in monitor_info.calculators:
+                    final_perf_results.update(calculator.conclude_performance())
+            
         # Conclude CPU profiler data
         if self.config.enable_cpu_profiler:
             final_perf_results.update(self._cpu_profiler.conclude_results())
@@ -928,26 +943,28 @@ class ROS2BenchmarkTest(unittest.TestCase):
         self.get_logger().info(
             'Starting fixed publisher rate tests for: '
             f'{additional_test_fixed_publisher_rates}')
-        for target_freq in additional_test_fixed_publisher_rates:
-            first_monitor_perf = self.get_performance_results_of_first_monitor_calculator(
-                final_perf_results)
-            mean_pub_fps = first_monitor_perf[BasicPerformanceMetrics.MEAN_PLAYBACK_FRAME_RATE]
-            if mean_pub_fps*1.05 < target_freq:
+        
+        if self.config.option == 'with_monitor_node':
+            for target_freq in additional_test_fixed_publisher_rates:
+                first_monitor_perf = self.get_performance_results_of_first_monitor_calculator(
+                    final_perf_results)
+                mean_pub_fps = first_monitor_perf[BasicPerformanceMetrics.MEAN_PLAYBACK_FRAME_RATE]
+                if mean_pub_fps*1.05 < target_freq:
+                    self.get_logger().info(
+                        f'Skipped testing the fixed publisher rate for {target_freq}fps '
+                        'as it is higher than the previously measured max sustainable '
+                        f'rate: {mean_pub_fps}')
+                    continue
                 self.get_logger().info(
-                    f'Skipped testing the fixed publisher rate for {target_freq}fps '
-                    'as it is higher than the previously measured max sustainable '
-                    f'rate: {mean_pub_fps}')
-                continue
-            self.get_logger().info(
-                f'Testing fixed publisher rate at {target_freq}fps')
-            playback_message_count = int(self.config.benchmark_duration * target_freq)
-            performance_results = self.benchmark_body(
-                playback_message_count,
-                target_freq)
-            self.print_report(performance_results, sub_heading=f'Fixed {target_freq} FPS')
+                    f'Testing fixed publisher rate at {target_freq}fps')
+                playback_message_count = int(self.config.benchmark_duration * target_freq)
+                performance_results = self.benchmark_body(
+                    playback_message_count,
+                    target_freq)
+                self.print_report(performance_results, sub_heading=f'Fixed {target_freq} FPS')
 
-            # Add the test result to the output metrics
-            final_perf_results[f'{target_freq}fps'] = performance_results
+                # Add the test result to the output metrics
+                final_perf_results[f'{target_freq}fps'] = performance_results
 
         self.pop_logger_name()
         return final_perf_results
