@@ -144,4 +144,9 @@ ros2_benchmark_config:
     input_data_start_time: -1
     input_data_end_time: -1
 
+    # Integration with benchmarks
+    # The option can be with or without the monitor node
     option: 'with_monitor_node'
+    # The session name is overwritten in the launch file
+    session_name: ""
+

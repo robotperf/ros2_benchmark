@@ -190,8 +190,8 @@ class ROS2BenchmarkTest(unittest.TestCase):
             ]
         )
 
-    @staticmethod
-    def generate_test_description_with_nsys(
+    @classmethod
+    def generate_test_description_with_nsys(cls,
         launch_setup, node_startup_delay: float = 5.0
     ) -> launch.LaunchDescription:
         """Generate a test launch description with the nsys capability built in."""
@@ -202,7 +202,7 @@ class ROS2BenchmarkTest(unittest.TestCase):
         nodes = launch_args + [OpaqueFunction(function=bound_launch_setup)]
         
         trace = Trace(
-            session_name="a2_rectify_nvidia",
+            session_name= cls.config.session_name,
             events_ust=[
                 "robotperf_benchmarks:*",
                 "ros2_image_pipeline:*",
