@@ -1,3 +1,7 @@
+#  Modification Copyright (c) 2023, Acceleration Robotics®
+#  Author: Alejandra Martínez Fariña <alex@accelerationrobotics.com>
+#  Based on:
+#
 # SPDX-FileCopyrightText: NVIDIA CORPORATION & AFFILIATES
 # Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 #
@@ -98,7 +102,8 @@ class ROS2BenchmarkConfig():
         'linear_scan_acceptable_frame_loss_fraction': float,
         'linear_scan_acceptable_frame_rate_drop': float,
         'input_data_start_time': float,
-        'input_data_end_time': float
+        'input_data_end_time': float,
+        'option': str
     }
 
     def __init__(self, config_file_path: str = '', *args, **kw):
