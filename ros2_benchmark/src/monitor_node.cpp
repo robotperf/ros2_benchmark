@@ -37,7 +37,8 @@ MonitorNode::MonitorNode(
         std::placeholders::_1,
         std::placeholders::_2),
       rmw_qos_profile_default,
-      service_callback_group_)}
+      service_callback_group_)},
+  qos_type(this->declare_parameter<std::string>("qos_type", "default"))
 {
 }
 
@@ -62,10 +63,15 @@ void MonitorNode::CreateGenericTypeMonitorSubscriber()
     this,
     std::placeholders::_1);
 
+  auto monitor_subs_qos = kQoS;
+  if (qos_type == "sensor"){
+    monitor_subs_qos = sensorQoS;
+  }
+
   monitor_sub_ = this->create_generic_subscription(
     "output",  // topic name
     monitor_data_format_,  // message type in the form of "package/type"
-    kQoS,
+    monitor_subs_qos,
     monitor_subscriber_callback);
 
   RCLCPP_INFO(

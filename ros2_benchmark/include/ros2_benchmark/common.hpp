@@ -27,6 +27,10 @@ namespace ros2_benchmark
 /// ROS 2 intraprocess communications is only compatible with keep_last policy
 const rclcpp::QoS kQoS{{RMW_QOS_POLICY_HISTORY_KEEP_LAST, 1000}};
 
+/// Quality-of-Service policy that 
+const rclcpp::QoS sensorQoS{
+  {RMW_QOS_POLICY_HISTORY_KEEP_LAST, 1000}, rmw_qos_profile_sensor_data};
+
 /// Quality-of-Service policy that will not drop any messages
 const rclcpp::QoS kBufferQoS{
   {RMW_QOS_POLICY_HISTORY_KEEP_LAST, 1000}, rmw_qos_profile_parameters};
