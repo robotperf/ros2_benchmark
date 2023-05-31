@@ -95,9 +95,6 @@ protected:
 
   /// Setting for matching QoS profile between publisher and monitor node
   std::string qos_type;
-
-  /// Custom QoS profile
-  rmw_qos_profile_t rmw_qos_profile_monitor_node;
 };
 
 }  // namespace ros2_benchmark
