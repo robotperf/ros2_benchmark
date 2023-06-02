@@ -92,6 +92,9 @@ protected:
   /// A service object for StartMonitoring.
   rclcpp::Service<ros2_benchmark_interfaces::srv::StartMonitoring>::SharedPtr
     start_monitoring_service_;
+
+  /// Setting for matching QoS profile between publisher and monitor node
+  std::string qos_type;
 };
 
 }  // namespace ros2_benchmark
