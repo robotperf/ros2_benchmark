@@ -103,7 +103,8 @@ class ROS2BenchmarkConfig():
         'linear_scan_acceptable_frame_rate_drop': float,
         'input_data_start_time': float,
         'input_data_end_time': float,
-        'option': str
+        'option': str,
+        'session_name': str
     }
 
     def __init__(self, config_file_path: str = '', *args, **kw):
