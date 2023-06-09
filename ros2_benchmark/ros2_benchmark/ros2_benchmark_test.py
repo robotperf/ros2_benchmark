@@ -192,7 +192,7 @@ class ROS2BenchmarkTest(unittest.TestCase):
 
     @classmethod
     def generate_test_description_with_nsys(cls,
-        launch_setup, node_startup_delay: float = 5.0
+        launch_setup, simple_nodes = [], node_startup_delay: float = 5.0
     ) -> launch.LaunchDescription:
         """Generate a test launch description with the nsys capability built in."""
         launch_args = NsysUtility.generate_launch_args()
@@ -222,7 +222,7 @@ class ROS2BenchmarkTest(unittest.TestCase):
         
         
         return launch.LaunchDescription(
-            nodes + [trace] + [
+            nodes + [trace] + simple_nodes + [
                 # Start tests after a fixed delay for node startup
                 launch.actions.TimerAction(
                     period=node_startup_delay,
