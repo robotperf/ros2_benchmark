@@ -1,3 +1,7 @@
+// Modifications:
+// - QoS: Martiño Crespo <martinho@accelerationrobotics.com>
+// - /power: Alejandra Martínez Fariña <alex@accelerationrobotics.com>
+
 // SPDX-FileCopyrightText: NVIDIA CORPORATION & AFFILIATES
 // Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 //
@@ -76,12 +80,19 @@ protected:
   /// Data format of the monitor subscriber.
   std::string monitor_data_format_;
 
+  /// Data format of the power subscriber.
+  std::string monitor_power_data_format_;
+
   /// Treat the header.stamp.sec field in a message as a message ID.
   bool revise_timestamps_as_message_ids_{false};
 
   /// A subscriber that monitors the incoming messages for a specified topic
   /// and record their arrival timestamps.
   std::shared_ptr<rclcpp::SubscriptionBase> monitor_sub_{nullptr};
+
+  /// A subscriber that monitors the incoming messages for a /power topic
+  /// and record their arrival timestamps.
+  std::shared_ptr<rclcpp::SubscriptionBase> monitor_power_sub_{nullptr};
 
   /// A list for storing timestamps of the observed messages.
   KeyTimePtMap end_timestamps_{};
