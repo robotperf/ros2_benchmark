@@ -696,8 +696,13 @@ class ROS2BenchmarkTest(unittest.TestCase):
                     self.get_logger().error(error_message)
                     raise RuntimeError(error_message)
                 for calculator in monitor_info.calculators:
-                    performance_results.update(
-                        calculator.calculate_performance(start_timestamps, end_timestamps))
+                    if self.config.add_power == 'on':
+                        performance_results.update(
+                            calculator.calculate_performance(start_timestamps, end_timestamps, monitor_response.power, monitor_response.energy, monitor_response.time))
+                    else:
+                        performance_results.update(
+                            calculator.calculate_performance(start_timestamps, end_timestamps))
+                    
             
         # Add CPU profiler results
         if self.config.enable_cpu_profiler:

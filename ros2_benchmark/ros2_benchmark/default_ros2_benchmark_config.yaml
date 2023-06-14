@@ -146,7 +146,9 @@ ros2_benchmark_config:
 
     # Integration with benchmarks
     # The option can be with or without the monitor node
-    option: 'with_monitor_node'
+    option: "with_monitor_node"
     # The session name is overwritten in the launch file
     session_name: ""
+    # Add power information
+    add_power: "off"
 

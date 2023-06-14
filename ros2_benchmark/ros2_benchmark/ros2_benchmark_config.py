@@ -104,7 +104,8 @@ class ROS2BenchmarkConfig():
         'input_data_start_time': float,
         'input_data_end_time': float,
         'option': str,
-        'session_name': str
+        'session_name': str,
+        'add_power': str
     }
 
     def __init__(self, config_file_path: str = '', *args, **kw):
