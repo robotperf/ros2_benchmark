@@ -40,8 +40,10 @@ find_package(power_msgs QUIET)
 
 if(power_msgs_FOUND)
   set(HAVE_POWER_MSGS TRUE)
+  message(WARNING "power_msgs package found. Power analysis features will be abled.")
 else()
   set(HAVE_POWER_MSGS FALSE)
+  message(WARNING "power_msgs package not found. Some features will be disabled.")
 endif()
 
 
