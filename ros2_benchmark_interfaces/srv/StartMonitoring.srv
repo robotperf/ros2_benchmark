@@ -34,3 +34,8 @@ int64 timeout
 
 # A list of message key-timestamp pairs for when the messages are received
 TimestampedMessageArray timestamps
+
+# The power consumption value (if available)
+float32 power
+float32 energy
+float32 time
