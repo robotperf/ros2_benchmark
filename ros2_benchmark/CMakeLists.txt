@@ -88,8 +88,10 @@ ament_auto_add_library(monitor_node SHARED
 target_compile_definitions(monitor_node
   PRIVATE "COMPOSITION_BUILDING_DLL"
 )
-ament_target_dependencies(monitor_node 
-  ${HAVE_OPTIONAL_PACKAGE} power_msgs)
+if(HAVE_POWER_MSGS)
+  ament_target_dependencies(monitor_node power_msgs)
+endif()
+
 rclcpp_components_register_nodes(monitor_node "ros2_benchmark::MonitorNode")
 set(node_plugins "${node_plugins}ros2_benchmark::MonitorNode;$<TARGET_FILE:monitor_node>\n")
 
