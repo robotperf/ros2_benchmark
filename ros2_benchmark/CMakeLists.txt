@@ -36,6 +36,14 @@ message( STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}" )
 find_package(ament_cmake_auto REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(power_msgs QUIET)
+
+if(power_msgs_FOUND)
+  set(HAVE_POWER_MSGS TRUE)
+else()
+  set(HAVE_POWER_MSGS FALSE)
+endif()
+
 
 ament_auto_find_build_dependencies()
 
@@ -78,6 +86,8 @@ ament_auto_add_library(monitor_node SHARED
 target_compile_definitions(monitor_node
   PRIVATE "COMPOSITION_BUILDING_DLL"
 )
+ament_target_dependencies(monitor_node 
+  ${HAVE_OPTIONAL_PACKAGE} power_msgs)
 rclcpp_components_register_nodes(monitor_node "ros2_benchmark::MonitorNode")
 set(node_plugins "${node_plugins}ros2_benchmark::MonitorNode;$<TARGET_FILE:monitor_node>\n")
 
