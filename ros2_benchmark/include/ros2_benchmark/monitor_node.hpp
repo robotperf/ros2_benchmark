@@ -31,6 +31,10 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/serialization.hpp"
 
+#ifdef HAVE_POWER_MSGS
+#include "power_msgs/msg/power.hpp"
+#endif
+
 #include "ros2_benchmark_interfaces/srv/start_monitoring.hpp"
 
 
@@ -58,6 +62,9 @@ protected:
   /// A subscriber callback function for generic ROS type message monitor
   /// (that adds end timestamps).
   void GenericMonitorSubscriberCallback(
+    std::shared_ptr<rclcpp::SerializedMessage> serialized_message_ptr);
+
+  void PowerMonitorSubscriberCallback(
     std::shared_ptr<rclcpp::SerializedMessage> serialized_message_ptr);
 
   /// Callback function to start monitoring the incoming messages.
@@ -93,6 +100,9 @@ protected:
   /// A subscriber that monitors the incoming messages for a /power topic
   /// and record their arrival timestamps.
   std::shared_ptr<rclcpp::SubscriptionBase> monitor_power_sub_{nullptr};
+
+  /// Last power recorded from /power topic
+  float power_, energy_, time_;
 
   /// A list for storing timestamps of the observed messages.
   KeyTimePtMap end_timestamps_{};
