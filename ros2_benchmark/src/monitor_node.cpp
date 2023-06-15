@@ -130,7 +130,7 @@ void MonitorNode::GenericMonitorSubscriberCallback(
 void MonitorNode::PowerMonitorSubscriberCallback(
   std::shared_ptr<rclcpp::SerializedMessage> serialized_message_ptr)
 {
-#ifdef HAVE_POWER_MSGS
+  #ifdef HAVE_POWER_MSGS
   // Deserialize the serialized data
   rclcpp::Serialization<power_msgs::msg::Power> power_serialization;
   power_msgs::msg::Power::UniquePtr power_msg(new power_msgs::msg::Power);
@@ -143,7 +143,7 @@ void MonitorNode::PowerMonitorSubscriberCallback(
   //   get_logger(),
   //   "[MonitorNode] Entered the callback\"%f\" for power monitoring",
   //   power_msg->power.data);
-#endif
+  #endif
 }
 
 
