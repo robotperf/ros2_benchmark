@@ -206,7 +206,8 @@ class ROS2BenchmarkTest(unittest.TestCase):
             events_ust=[
                 "robotperf_benchmarks:*",
                 "ros2_image_pipeline:*",
-                "ros2:*"
+                "ros2:*",
+                "robotcore_power:*",
                 # "lttng_ust_cyg_profile*",
                 # "lttng_ust_statedump*",
                 # "liblttng-ust-libc-wrapper",
