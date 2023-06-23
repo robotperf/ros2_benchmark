@@ -55,6 +55,11 @@ public:
   /// Construct a new MonitorNode object with a custom node name.
   explicit MonitorNode(const std::string &, const rclcpp::NodeOptions &);
 
+  void CreatePowerSubscription();
+
+  void PowerMonitorSubscriberCallback(
+    std::shared_ptr<rclcpp::SerializedMessage> serialized_message_ptr);
+
 protected:
   /// Create a generic type monitor subscriber.
   void CreateGenericTypeMonitorSubscriber();
@@ -62,9 +67,6 @@ protected:
   /// A subscriber callback function for generic ROS type message monitor
   /// (that adds end timestamps).
   void GenericMonitorSubscriberCallback(
-    std::shared_ptr<rclcpp::SerializedMessage> serialized_message_ptr);
-
-  void PowerMonitorSubscriberCallback(
     std::shared_ptr<rclcpp::SerializedMessage> serialized_message_ptr);
 
   /// Callback function to start monitoring the incoming messages.

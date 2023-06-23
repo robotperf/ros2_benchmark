@@ -78,35 +78,39 @@ void MonitorNode::CreateGenericTypeMonitorSubscriber()
     monitor_data_format_,  // message type in the form of "package/type"
     monitor_subs_qos,
     monitor_subscriber_callback);
-  
-  if (monitor_power_data_format_ == "power_msgs/msg/Power")
-  { 
-    RCLCPP_INFO(
-    get_logger(),
-    "[MonitorNode] It entered the initialization");
-    std::function<void(std::shared_ptr<rclcpp::SerializedMessage>)>
-    monitor_power_subscriber_callback =
-      std::bind(
-      &MonitorNode::PowerMonitorSubscriberCallback,
-      this,
-      std::placeholders::_1);
-    auto monitor_power_subs_qos = kQoS;
-    monitor_power_sub_ = this->create_generic_subscription(
-      "/power",  // topic name
-      monitor_power_data_format_,  // message type in the form of "package/type"
-      monitor_power_subs_qos,
-      monitor_power_subscriber_callback);
-
-    RCLCPP_INFO(
-    get_logger(),
-    "[MonitorNode] Created a generic type power monitor subscriber: topic=\"%s\"",
-    monitor_power_sub_->get_topic_name());
-  }
 
   RCLCPP_INFO(
     get_logger(),
     "[MonitorNode] Created a generic type monitor subscriber: topic=\"%s\"",
     monitor_sub_->get_topic_name());
+
+  if (monitor_power_data_format_ == "power_msgs/msg/Power"){
+    CreatePowerSubscription();
+  }
+}
+
+void MonitorNode::CreatePowerSubscription()
+{
+  RCLCPP_INFO(
+  get_logger(),
+  "[MonitorNode] It entered the initialization");
+  std::function<void(std::shared_ptr<rclcpp::SerializedMessage>)>
+  monitor_power_subscriber_callback =
+    std::bind(
+    &MonitorNode::PowerMonitorSubscriberCallback,
+    this,
+    std::placeholders::_1);
+  auto monitor_power_subs_qos = kQoS;
+  monitor_power_sub_ = this->create_generic_subscription(
+    "/power",  // topic name
+    monitor_power_data_format_,  // message type in the form of "package/type"
+    monitor_power_subs_qos,
+    monitor_power_subscriber_callback);
+
+  RCLCPP_INFO(
+  get_logger(),
+  "[MonitorNode] Created a generic type power monitor subscriber: topic=\"%s\"",
+  monitor_power_sub_->get_topic_name());
 }
 
 void MonitorNode::GenericMonitorSubscriberCallback(
