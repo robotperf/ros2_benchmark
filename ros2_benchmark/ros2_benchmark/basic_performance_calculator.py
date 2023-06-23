@@ -45,6 +45,9 @@ class BasicPerformanceMetrics(Enum):
     MEAN_JITTER = 'Mean Frame-to-Frame Jitter (ms)'
     RMS_LATENCY = 'RMS Frame-to-Frame Jitter (ms)'
     STD_DEV_JITTER = 'Frame-to-Frame Jitter Std. Deviation (ms)'
+    AVERAGE_POWER = 'Average Benchmarking Power Consumption (W)'
+    TOTAL_ENERGY = 'Overall Benchmarking Energy Consumption (J)'
+    TOTAL_TIME = 'Overall Benchmarking Time Consumption (s)'
 
 
 class BasicPerformanceCalculator():
@@ -82,7 +85,10 @@ class BasicPerformanceCalculator():
 
     def calculate_performance(self,
                               start_timestamps_ns: dict,
-                              end_timestamps_ns: dict) -> dict:
+                              end_timestamps_ns: dict,
+                              power_value = -1,
+                              energy_value = 0,
+                              time_value = 0) -> dict:
         """Calculate performance based on message start and end timestamps."""
         perf_data = {}
         num_of_frame_sent = len(start_timestamps_ns)
@@ -126,7 +132,15 @@ class BasicPerformanceCalculator():
             first_end_timestamp_ms - first_sent_time_ms
         perf_data[BasicPerformanceMetrics.LAST_SENT_RECEIVED_LATENCY] = \
             last_end_timestamp_ms - last_sent_time_ms
-
+        
+        if power_value >= 0:
+            perf_data[BasicPerformanceMetrics.AVERAGE_POWER] = power_value
+            perf_data[BasicPerformanceMetrics.TOTAL_ENERGY] = energy_value
+            perf_data[BasicPerformanceMetrics.TOTAL_TIME] = time_value
+        else:
+            perf_data[BasicPerformanceMetrics.AVERAGE_POWER] = "N/A"
+            perf_data[BasicPerformanceMetrics.TOTAL_ENERGY] = "N/A"
+            perf_data[BasicPerformanceMetrics.TOTAL_TIME] = "N/A"
 
         # BasicPerformanceMetrics.MAX_LATENCY, MIN and MEAN
         #
@@ -210,6 +224,7 @@ class BasicPerformanceCalculator():
             BasicPerformanceMetrics.STD_DEV_JITTER,
             BasicPerformanceMetrics.MEAN_PLAYBACK_FRAME_RATE,
             BasicPerformanceMetrics.RMS_LATENCY,
+            BasicPerformanceMetrics.AVERAGE_POWER,
         ]
         MAX_METRICS = [
             BasicPerformanceMetrics.MAX_LATENCY,
@@ -219,6 +234,11 @@ class BasicPerformanceCalculator():
         MIN_METRICS = [
             BasicPerformanceMetrics.MIN_LATENCY,
             BasicPerformanceMetrics.MIN_JITTER,
+        ]
+
+        OVERALL_METRICS = [
+            BasicPerformanceMetrics.TOTAL_ENERGY,
+            BasicPerformanceMetrics.TOTAL_TIME,
         ]
 
         final_perf_data = {}
@@ -237,6 +257,8 @@ class BasicPerformanceCalculator():
                 final_perf_data[metric] = max(metric_value_list)
             elif metric in MIN_METRICS:
                 final_perf_data[metric] = min(metric_value_list)
+            elif metric in OVERALL_METRICS:
+                final_perf_data[metric] = metric_value_list[-1]
             else:
                 final_perf_data[metric] = 'INVALID VALUES: NO CONCLUDED METHOD ASSIGNED'
 

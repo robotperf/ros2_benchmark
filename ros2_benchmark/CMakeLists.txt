@@ -37,6 +37,16 @@ find_package(ament_cmake_auto REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 
+find_package(power_msgs QUIET)
+if(power_msgs_FOUND)
+  set(HAVE_POWER_MSGS TRUE)
+  message("power_msgs package found. Power analysis features will be abled.")
+else()
+  set(HAVE_POWER_MSGS FALSE)
+  message(WARNING "power_msgs package not found. Some features will be disabled.")
+endif()
+
+
 ament_auto_find_build_dependencies()
 
 ament_python_install_package(${PROJECT_NAME})
@@ -78,6 +88,12 @@ ament_auto_add_library(monitor_node SHARED
 target_compile_definitions(monitor_node
   PRIVATE "COMPOSITION_BUILDING_DLL"
 )
+if(HAVE_POWER_MSGS)
+  ament_target_dependencies(monitor_node power_msgs)
+  target_compile_definitions(monitor_node
+  PRIVATE -DHAVE_POWER_MSGS
+)
+endif()
 rclcpp_components_register_nodes(monitor_node "ros2_benchmark::MonitorNode")
 set(node_plugins "${node_plugins}ros2_benchmark::MonitorNode;$<TARGET_FILE:monitor_node>\n")
 

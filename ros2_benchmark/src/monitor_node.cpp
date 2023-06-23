@@ -1,3 +1,7 @@
+// Modifications:
+// - QoS: Martiño Crespo <martinho@accelerationrobotics.com>
+// - /power: Alejandra Martínez Fariña <alex@accelerationrobotics.com>
+
 // SPDX-FileCopyrightText: NVIDIA CORPORATION & AFFILIATES
 // Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 //
@@ -27,6 +31,7 @@ MonitorNode::MonitorNode(
   monitor_index_((uint32_t)declare_parameter<uint16_t>("monitor_index", 0)),
   monitor_service_name_(kMonitorNodeServiceBaseName + std::to_string(monitor_index_)),
   monitor_data_format_(declare_parameter<std::string>("monitor_data_format", "")),
+  monitor_power_data_format_(declare_parameter<std::string>("monitor_power_data_format", "")),
   service_callback_group_{create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive)},
   start_monitoring_service_{
     create_service<ros2_benchmark_interfaces::srv::StartMonitoring>(
@@ -73,6 +78,30 @@ void MonitorNode::CreateGenericTypeMonitorSubscriber()
     monitor_data_format_,  // message type in the form of "package/type"
     monitor_subs_qos,
     monitor_subscriber_callback);
+  
+  if (monitor_power_data_format_ == "power_msgs/msg/Power")
+  { 
+    RCLCPP_INFO(
+    get_logger(),
+    "[MonitorNode] It entered the initialization");
+    std::function<void(std::shared_ptr<rclcpp::SerializedMessage>)>
+    monitor_power_subscriber_callback =
+      std::bind(
+      &MonitorNode::PowerMonitorSubscriberCallback,
+      this,
+      std::placeholders::_1);
+    auto monitor_power_subs_qos = kQoS;
+    monitor_power_sub_ = this->create_generic_subscription(
+      "/power",  // topic name
+      monitor_power_data_format_,  // message type in the form of "package/type"
+      monitor_power_subs_qos,
+      monitor_power_subscriber_callback);
+
+    RCLCPP_INFO(
+    get_logger(),
+    "[MonitorNode] Created a generic type power monitor subscriber: topic=\"%s\"",
+    monitor_power_sub_->get_topic_name());
+  }
 
   RCLCPP_INFO(
     get_logger(),
@@ -96,6 +125,27 @@ void MonitorNode::GenericMonitorSubscriberCallback(
     RecordEndTimestampAutoKey();
   }
 }
+
+
+void MonitorNode::PowerMonitorSubscriberCallback(
+  std::shared_ptr<rclcpp::SerializedMessage> serialized_message_ptr)
+{
+  #ifdef HAVE_POWER_MSGS
+  // Deserialize the serialized data
+  rclcpp::Serialization<power_msgs::msg::Power> power_serialization;
+  power_msgs::msg::Power::UniquePtr power_msg(new power_msgs::msg::Power);
+  power_serialization.deserialize_message(serialized_message_ptr.get(), power_msg.get());
+
+  power_ = power_msg->power.data;
+  energy_ = power_msg->energy.data;
+  time_ = power_msg->time.data;
+  // RCLCPP_INFO(
+  //   get_logger(),
+  //   "[MonitorNode] Entered the callback\"%f\" for power monitoring",
+  //   power_msg->power.data);
+  #endif
+}
+
 
 bool MonitorNode::RecordEndTimestamp(const int32_t & message_key)
 {
@@ -160,6 +210,13 @@ void MonitorNode::StartMonitoringServiceCallback(
 
   response->timestamps = timestamps;
 
+  if (monitor_power_data_format_ == "power_msgs/msg/Power")
+  {
+    response->power = power_;
+    response->energy = energy_;
+    response->time = time_;
+  }
+  
   end_timestamps_.clear();
 }
 
