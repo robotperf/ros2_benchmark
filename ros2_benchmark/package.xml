@@ -38,6 +38,7 @@ SPDX-License-Identifier: Apache-2.0
   <depend>rclcpp_components</depend>
   <depend>ros2_benchmark_interfaces</depend>
   <depend>rosbag2_compression_zstd</depend>
+  <depend>rosbag2_compression</depend>
   <depend>rosbag2_cpp</depend>
   <depend>rosbag2_py</depend>
   <depend>std_msgs</depend>
